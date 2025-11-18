@@ -271,24 +271,55 @@
       }
 
       .debug-panel {
-        position: absolute;
-        top: 80px;
-        right: 30px;
-        background: rgba(0, 0, 0, 0.9);
-        padding: 20px;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.75);
+        padding: 15px;
         border-radius: 8px;
-        max-width: 400px;
-        max-height: 300px;
+        max-width: 450px;
+        max-height: 400px;
         overflow-y: auto;
         font-family: 'Courier New', monospace;
-        font-size: 12px;
+        font-size: 13px;
         color: #ffffff;
-        z-index: 200;
-        display: none;
+        z-index: 999;
+        display: block;
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
       .debug-panel.visible {
         display: block;
+      }
+
+      .debug-message {
+        margin-bottom: 8px;
+        padding: 6px 8px;
+        border-left: 3px solid #0066cc;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        word-wrap: break-word;
+      }
+
+      .debug-message.error {
+        border-left-color: #f44336;
+        background: rgba(244, 67, 54, 0.1);
+      }
+
+      .debug-message.warning {
+        border-left-color: #ff9800;
+        background: rgba(255, 152, 0, 0.1);
+      }
+
+      .debug-message.success {
+        border-left-color: #4caf50;
+        background: rgba(76, 175, 80, 0.1);
+      }
+
+      .debug-time {
+        color: #888;
+        font-size: 11px;
+        margin-right: 8px;
       }
 
       .hidden {
@@ -396,20 +427,10 @@
 
       <!-- Debug Panel -->
       <div id="debugPanel" class="debug-panel">
-        <div><strong>DRM Receiver Debug Log</strong></div>
+        <div style="margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">
+          Debug Log
+        </div>
         <div id="debugLog"></div>
-        <button
-          onclick="toggleDebug()"
-          style="
-            margin-top: 10px;
-            padding: 5px 10px;
-            background: #0066cc;
-            border: none;
-            color: white;
-            border-radius: 4px;
-          ">
-          Toggle Debug
-        </button>
       </div>
     </div>
 
@@ -433,12 +454,33 @@
       const errorMessage = document.getElementById('errorMessage');
       const errorDetails = document.getElementById('errorDetails');
       const loadingText = document.getElementById('loadingText');
+      const debugLogElement = document.getElementById('debugLog');
 
       let debugMode = false;
+      const MAX_DEBUG_MESSAGES = 20;
 
       function debugLog(message, level = 'INFO') {
-        const timestamp = new Date().toISOString();
+        const timestamp = new Date().toLocaleTimeString();
         console.log(`[${timestamp}] [${level}] ${message}`);
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'debug-message';
+
+        if (level === 'ERROR') {
+          messageDiv.classList.add('error');
+        } else if (level === 'WARNING') {
+          messageDiv.classList.add('warning');
+        } else if (level === 'SUCCESS') {
+          messageDiv.classList.add('success');
+        }
+
+        messageDiv.innerHTML = `<span class="debug-time">${timestamp}</span><span>${message}</span>`;
+
+        debugLogElement.insertBefore(messageDiv, debugLogElement.firstChild);
+
+        while (debugLogElement.children.length > MAX_DEBUG_MESSAGES) {
+          debugLogElement.removeChild(debugLogElement.lastChild);
+        }
       }
 
       function updateStatus(status, text) {
@@ -550,17 +592,68 @@
         }
       );
 
+      let isLiveStream = false;
+      let mediaStatusCount = 0;
+
+      playerManager.setMessageInterceptor(
+        cast.framework.messages.MessageType.LOAD,
+        (loadRequestData) => {
+          debugLog('LOAD interceptor called', 'INFO');
+          debugLog(`Full LOAD data: ${JSON.stringify(loadRequestData, null, 2).substring(0, 500)}`, 'INFO');
+
+          if (loadRequestData.media) {
+            debugLog(`media.streamType: ${loadRequestData.media.streamType}`, 'INFO');
+            debugLog(`media.contentUrl: ${loadRequestData.media.contentUrl}`, 'INFO');
+            debugLog(`StreamType.LIVE value: ${cast.framework.messages.StreamType.LIVE}`, 'INFO');
+            debugLog(`StreamType.BUFFERED value: ${cast.framework.messages.StreamType.BUFFERED}`, 'INFO');
+
+            if (loadRequestData.media.streamType === cast.framework.messages.StreamType.LIVE) {
+              isLiveStream = true;
+              debugLog('LIVE STREAM DETECTED - Progress will show as FULL', 'SUCCESS');
+            } else {
+              isLiveStream = false;
+              debugLog(`VOD stream detected (streamType=${loadRequestData.media.streamType})`, 'INFO');
+            }
+          }
+          return loadRequestData;
+        }
+      );
+
+      playerManager.setMessageInterceptor(
+        cast.framework.messages.MessageType.MEDIA_STATUS,
+        (mediaStatusMessage) => {
+          mediaStatusCount++;
+          if (mediaStatusCount % 10 === 1) {
+            debugLog(`Media status #${mediaStatusCount}, isLive: ${isLiveStream}`, 'INFO');
+          }
+
+          if (isLiveStream &&
+              mediaStatusMessage.media &&
+              mediaStatusMessage.currentTime !== undefined &&
+              mediaStatusMessage.media.duration !== undefined) {
+            if (mediaStatusCount % 10 === 1) {
+              debugLog(`Setting currentTime=${mediaStatusMessage.media.duration} (was ${mediaStatusMessage.currentTime})`, 'SUCCESS');
+            }
+            mediaStatusMessage.currentTime = mediaStatusMessage.media.duration;
+          }
+          return mediaStatusMessage;
+        }
+      );
+
       // Start the receiver
       const options = new cast.framework.CastReceiverOptions();
       options.maxInactivity = 3600; // 1 hour
       options.disableIdleTimeout = false;
 
-      debugLog('Starting Cast Receiver...');
+      debugLog('🚀 PBS Custom Receiver Initializing...', 'INFO');
+      debugLog('Debug panel is working!', 'SUCCESS');
+      debugLog('Starting Cast Receiver...', 'INFO');
       updateStatus('initializing', 'Initializing...');
 
       context.start(options);
       updateStatus('ready', 'Ready');
-      debugLog('Cast Receiver started successfully');
+      debugLog('✅ Cast Receiver started successfully', 'SUCCESS');
+      debugLog('Waiting for media to load...', 'INFO');
     </script>
   </body>
 </html>
