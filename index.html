@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -47,7 +47,8 @@
         background: #000000;
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.6),
           0 10px 25px rgba(0, 0, 0, 0.3);
         margin: 20px;
         position: relative;
@@ -399,9 +400,7 @@
       <div id="loadingOverlay" class="loading-overlay hidden fade-in">
         <div class="loading-content">
           <div class="spinner"></div>
-          <div class="loading-text" id="loadingText">
-            Loading DRM Protected Content...
-          </div>
+          <div class="loading-text" id="loadingText">Loading DRM Protected Content...</div>
         </div>
       </div>
 
@@ -431,8 +430,7 @@
             font-weight: bold;
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
             padding-bottom: 8px;
-          "
-        >
+          ">
           Debug Log
         </div>
         <div id="debugLog"></div>
@@ -516,172 +514,119 @@
       }
 
       // Configure DRM via playbackConfig
-      playerManager.setMediaPlaybackInfoHandler(
-        (loadRequest, playbackConfig) => {
-          debugLog('Media playback info handler called');
-          debugLog(`Content URL: ${loadRequest.media.contentId}`);
-          debugLog(
-            `Custom Data: ${JSON.stringify(
-              loadRequest.media.customData,
-              null,
-              2
-            )}`
-          );
+      playerManager.setMediaPlaybackInfoHandler((loadRequest, playbackConfig) => {
+        debugLog('Media playback info handler called');
+        debugLog(`Content URL: ${loadRequest.media.contentId}`);
+        debugLog(`Custom Data: ${JSON.stringify(loadRequest.media.customData, null, 2)}`);
 
-          if (
-            loadRequest.media.customData &&
-            loadRequest.media.customData.drmConfiguration
-          ) {
-            const drmConfig = loadRequest.media.customData.drmConfiguration;
-            debugLog(`DRM Config found: ${JSON.stringify(drmConfig, null, 2)}`);
+        if (loadRequest.media.customData && loadRequest.media.customData.drmConfiguration) {
+          const drmConfig = loadRequest.media.customData.drmConfiguration;
+          debugLog(`DRM Config found: ${JSON.stringify(drmConfig, null, 2)}`);
 
-            showLoading('Loading DRM Protected Content...');
+          showLoading('Loading DRM Protected Content...');
 
-            // Configure Widevine
-            if (drmConfig.widevineLicenseUrl) {
-              debugLog(`Setting up Widevine: ${drmConfig.widevineLicenseUrl}`);
-              playbackConfig.licenseUrl = drmConfig.widevineLicenseUrl;
-              playbackConfig.protectionSystem =
-                cast.framework.ContentProtection.WIDEVINE;
+          // Configure Widevine
+          if (drmConfig.widevineLicenseUrl) {
+            debugLog(`Setting up Widevine: ${drmConfig.widevineLicenseUrl}`);
+            playbackConfig.licenseUrl = drmConfig.widevineLicenseUrl;
+            playbackConfig.protectionSystem = cast.framework.ContentProtection.WIDEVINE;
 
-              if (drmConfig.httpHeaders) {
-                playbackConfig.licenseRequestHandler = (requestInfo) => {
-                  requestInfo.headers = {
-                    ...requestInfo.headers,
-                    ...drmConfig.httpHeaders,
-                  };
+            if (drmConfig.httpHeaders) {
+              playbackConfig.licenseRequestHandler = requestInfo => {
+                requestInfo.headers = {
+                  ...requestInfo.headers,
+                  ...drmConfig.httpHeaders,
                 };
-              }
+              };
             }
-            // Configure PlayReady
-            else if (drmConfig.playreadyLicenseUrl) {
-              debugLog(
-                `Setting up PlayReady: ${drmConfig.playreadyLicenseUrl}`
-              );
-              playbackConfig.licenseUrl = drmConfig.playreadyLicenseUrl;
-              playbackConfig.protectionSystem =
-                cast.framework.ContentProtection.PLAYREADY;
-            }
-          } else {
-            debugLog('No DRM configuration found in customData');
           }
-
-          return playbackConfig;
+          // Configure PlayReady
+          else if (drmConfig.playreadyLicenseUrl) {
+            debugLog(`Setting up PlayReady: ${drmConfig.playreadyLicenseUrl}`);
+            playbackConfig.licenseUrl = drmConfig.playreadyLicenseUrl;
+            playbackConfig.protectionSystem = cast.framework.ContentProtection.PLAYREADY;
+          }
+        } else {
+          debugLog('No DRM configuration found in customData');
         }
-      );
+
+        return playbackConfig;
+      });
 
       // Handle player events
-      playerManager.addEventListener(
-        cast.framework.events.EventType.ERROR,
-        (event) => {
-          debugLog(`Player error: ${JSON.stringify(event)}`, 'ERROR');
-          const error = event.detailedErrorCode || event.error;
-          showError('Playback Error', `Error code: ${error}`);
-        }
-      );
+      playerManager.addEventListener(cast.framework.events.EventType.ERROR, event => {
+        debugLog(`Player error: ${JSON.stringify(event)}`, 'ERROR');
+        const error = event.detailedErrorCode || event.error;
+        showError('Playback Error', `Error code: ${error}`);
+      });
 
-      playerManager.addEventListener(
-        cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
-        () => {
-          debugLog('Player load complete');
-          hideLoading();
-          updateStatus('playing', 'Playing');
+      playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
+        debugLog('Player load complete');
+        hideLoading();
+        updateStatus('playing', 'Playing');
 
-          // Ensure cast-media-player is visible
-          const player = document.getElementById('player');
-          if (player) {
-            debugLog(
-              `Player element found, display: ${
-                window.getComputedStyle(player).display
-              }`
-            );
-          } else {
-            debugLog('Player element NOT found!', 'ERROR');
-          }
+        // Ensure cast-media-player is visible
+        const player = document.getElementById('player');
+        if (player) {
+          debugLog(`Player element found, display: ${window.getComputedStyle(player).display}`);
+        } else {
+          debugLog('Player element NOT found!', 'ERROR');
         }
-      );
+      });
 
-      playerManager.addEventListener(
-        cast.framework.events.EventType.PLAYER_LOADING,
-        () => {
-          debugLog('Player loading');
-          showLoading('Loading media...');
-        }
-      );
+      playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOADING, () => {
+        debugLog('Player loading');
+        showLoading('Loading media...');
+      });
 
       // Log when video starts playing
-      playerManager.addEventListener(
-        cast.framework.events.EventType.PLAYING,
-        () => {
-          debugLog('Video is playing');
-          hideLoading();
-        }
-      );
+      playerManager.addEventListener(cast.framework.events.EventType.PLAYING, () => {
+        debugLog('Video is playing');
+        hideLoading();
+      });
 
       let isLiveStream = false;
       let mediaStatusCount = 0;
 
       playerManager.setMessageInterceptor(
         cast.framework.messages.MessageType.LOAD,
-        (loadRequestData) => {
+        loadRequestData => {
           debugLog('LOAD interceptor called', 'INFO');
           debugLog(
-            `Full LOAD data: ${JSON.stringify(
-              loadRequestData,
-              null,
-              2
-            ).substring(0, 500)}`,
-            'INFO'
+            `Full LOAD data: ${JSON.stringify(loadRequestData, null, 2).substring(0, 500)}`,
+            'INFO',
           );
 
           if (loadRequestData.media) {
-            debugLog(
-              `media.streamType: ${loadRequestData.media.streamType}`,
-              'INFO'
-            );
-            debugLog(
-              `media.contentUrl: ${loadRequestData.media.contentUrl}`,
-              'INFO'
-            );
-            debugLog(
-              `StreamType.LIVE value: ${cast.framework.messages.StreamType.LIVE}`,
-              'INFO'
-            );
+            debugLog(`media.streamType: ${loadRequestData.media.streamType}`, 'INFO');
+            debugLog(`media.contentUrl: ${loadRequestData.media.contentUrl}`, 'INFO');
+            debugLog(`StreamType.LIVE value: ${cast.framework.messages.StreamType.LIVE}`, 'INFO');
             debugLog(
               `StreamType.BUFFERED value: ${cast.framework.messages.StreamType.BUFFERED}`,
-              'INFO'
+              'INFO',
             );
 
-            if (
-              loadRequestData.media.streamType ===
-              cast.framework.messages.StreamType.LIVE
-            ) {
+            if (loadRequestData.media.streamType === cast.framework.messages.StreamType.LIVE) {
               isLiveStream = true;
-              debugLog(
-                'LIVE STREAM DETECTED - Progress will show as FULL',
-                'SUCCESS'
-              );
+              debugLog('LIVE STREAM DETECTED - Progress will show as FULL', 'SUCCESS');
             } else {
               isLiveStream = false;
               debugLog(
                 `VOD stream detected (streamType=${loadRequestData.media.streamType})`,
-                'INFO'
+                'INFO',
               );
             }
           }
           return loadRequestData;
-        }
+        },
       );
 
       playerManager.setMessageInterceptor(
         cast.framework.messages.MessageType.MEDIA_STATUS,
-        (mediaStatusMessage) => {
+        mediaStatusMessage => {
           mediaStatusCount++;
           if (mediaStatusCount % 10 === 1) {
-            debugLog(
-              `Media status #${mediaStatusCount}, isLive: ${isLiveStream}`,
-              'INFO'
-            );
+            debugLog(`Media status #${mediaStatusCount}, isLive: ${isLiveStream}`, 'INFO');
           }
 
           if (
@@ -693,13 +638,13 @@
             if (mediaStatusCount % 10 === 1) {
               debugLog(
                 `Setting currentTime=${mediaStatusMessage.media.duration} (was ${mediaStatusMessage.currentTime})`,
-                'SUCCESS'
+                'SUCCESS',
               );
             }
             mediaStatusMessage.currentTime = mediaStatusMessage.media.duration;
           }
           return mediaStatusMessage;
-        }
+        },
       );
 
       // Start the receiver
