@@ -211,53 +211,6 @@
         transform: scale(0.95);
       }
 
-      .status-indicator {
-        position: absolute;
-        top: 30px;
-        right: 30px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(0, 0, 0, 0.6);
-        padding: 8px 16px;
-        border-radius: 20px;
-        z-index: 100;
-      }
-
-      .status-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #4caf50;
-        animation: pulse 2s infinite;
-      }
-
-      .status-dot.error {
-        background: #f44336;
-        animation: none;
-      }
-
-      .status-dot.warning {
-        background: #ff9800;
-        animation: pulse 1s infinite;
-      }
-
-      @keyframes pulse {
-        0% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-        100% {
-          opacity: 1;
-        }
-      }
-
-      .status-text {
-        font-size: 14px;
-        color: #ffffff;
-      }
 
 
       .hidden {
@@ -308,23 +261,11 @@
           padding: 10px 16px;
           min-width: 70px;
         }
-
-        .status-indicator {
-          top: 20px;
-          right: 20px;
-          padding: 6px 12px;
-        }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <!-- Status Indicator -->
-      <div class="status-indicator">
-        <div id="statusDot" class="status-dot"></div>
-        <span id="statusText" class="status-text">Ready</span>
-      </div>
-
       <!-- Main Video Container - CAF will inject video element here -->
       <cast-media-player id="player"></cast-media-player>
 
@@ -371,16 +312,9 @@
       // UI Elements
       const loadingOverlay = document.getElementById('loadingOverlay');
       const errorOverlay = document.getElementById('errorOverlay');
-      const statusDot = document.getElementById('statusDot');
-      const statusText = document.getElementById('statusText');
       const errorMessage = document.getElementById('errorMessage');
       const errorDetails = document.getElementById('errorDetails');
       const loadingText = document.getElementById('loadingText');
-
-      function updateStatus(status, text) {
-        statusText.textContent = text;
-        statusDot.className = `status-dot ${status === 'error' ? 'error' : status === 'warning' ? 'warning' : ''}`;
-      }
 
       function showLoading(message = 'Loading...') {
         loadingText.textContent = message;
@@ -397,7 +331,6 @@
         errorOverlay.classList.remove('hidden');
         errorMessage.textContent = title;
         errorDetails.textContent = details;
-        updateStatus('error', 'Error');
       }
 
       // Configure DRM via playbackConfig
@@ -439,7 +372,6 @@
 
       playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
         hideLoading();
-        updateStatus('playing', 'Playing');
       });
 
       playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOADING, () => {
@@ -486,10 +418,7 @@
       options.maxInactivity = 3600; // 1 hour
       options.disableIdleTimeout = false;
 
-      updateStatus('initializing', 'Initializing...');
-
       context.start(options);
-      updateStatus('ready', 'Ready');
     </script>
   </body>
 </html>
