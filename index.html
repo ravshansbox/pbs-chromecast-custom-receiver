@@ -29,6 +29,17 @@
         position: relative;
       }
 
+      .logo {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        font-size: 32px;
+        font-weight: bold;
+        color: #0066cc;
+        z-index: 100;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
       .video-wrapper {
         width: 100%;
         max-width: 1280px;
@@ -343,6 +354,12 @@
 
       /* Responsive design */
       @media (max-width: 768px) {
+        .logo {
+          font-size: 24px;
+          top: 20px;
+          left: 20px;
+        }
+
         .video-wrapper {
           margin: 10px;
           border-radius: 8px;
@@ -471,9 +488,7 @@
 
       function updateStatus(status, text) {
         statusText.textContent = text;
-        statusDot.className = `status-dot ${
-          status === 'error' ? 'error' : status === 'warning' ? 'warning' : ''
-        }`;
+        statusDot.className = `status-dot ${status === 'error' ? 'error' : status === 'warning' ? 'warning' : ''}`;
         debugLog(`Status: ${text}`);
       }
 
