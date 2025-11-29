@@ -243,7 +243,6 @@
         }
       }
 
-      /* Responsive design */
       @media (max-width: 768px) {
         .video-wrapper {
           margin: 10px;
@@ -266,10 +265,8 @@
   </head>
   <body>
     <div class="container">
-      <!-- Main Video Container - CAF will inject video element here -->
       <cast-media-player id="player"></cast-media-player>
 
-      <!-- Loading Overlay -->
       <div id="loadingOverlay" class="loading-overlay hidden fade-in">
         <div class="loading-content">
           <div class="spinner"></div>
@@ -277,7 +274,6 @@
         </div>
       </div>
 
-      <!-- Error Overlay -->
       <div id="errorOverlay" class="error-overlay hidden fade-in">
         <div class="error-content">
           <div class="error-icon">⚠️</div>
@@ -289,7 +285,6 @@
         </div>
       </div>
 
-      <!-- Playback Controls -->
       <div id="controlsOverlay" class="controls-overlay hidden fade-in">
         <button id="playPauseBtn" class="control-btn">Pause</button>
         <button id="muteBtn" class="control-btn">Mute</button>
@@ -297,19 +292,12 @@
 
     </div>
 
-    <!-- Cast Receiver Framework -->
     <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
 
     <script>
-      /**
-       * PBS Custom DRM Chromecast Receiver
-       * Supports Widevine and PlayReady DRM systems
-       * Version: 3.0.0 - CAF v3 Compatible
-       */
       const context = cast.framework.CastReceiverContext.getInstance();
       const playerManager = context.getPlayerManager();
 
-      // UI Elements
       const loadingOverlay = document.getElementById('loadingOverlay');
       const errorOverlay = document.getElementById('errorOverlay');
       const errorMessage = document.getElementById('errorMessage');
@@ -333,14 +321,12 @@
         errorDetails.textContent = details;
       }
 
-      // Configure DRM via playbackConfig
       playerManager.setMediaPlaybackInfoHandler((loadRequest, playbackConfig) => {
         if (loadRequest.media.customData && loadRequest.media.customData.drmConfiguration) {
           const drmConfig = loadRequest.media.customData.drmConfiguration;
 
           showLoading('Loading DRM Protected Content...');
 
-          // Configure Widevine
           if (drmConfig.widevineLicenseUrl) {
             playbackConfig.licenseUrl = drmConfig.widevineLicenseUrl;
             playbackConfig.protectionSystem = cast.framework.ContentProtection.WIDEVINE;
@@ -354,7 +340,6 @@
               };
             }
           }
-          // Configure PlayReady
           else if (drmConfig.playreadyLicenseUrl) {
             playbackConfig.licenseUrl = drmConfig.playreadyLicenseUrl;
             playbackConfig.protectionSystem = cast.framework.ContentProtection.PLAYREADY;
@@ -364,7 +349,6 @@
         return playbackConfig;
       });
 
-      // Handle player events
       playerManager.addEventListener(cast.framework.events.EventType.ERROR, event => {
         const error = event.detailedErrorCode || event.error;
         showError('Playback Error', `Error code: ${error}`);
@@ -413,9 +397,8 @@
         },
       );
 
-      // Start the receiver
       const options = new cast.framework.CastReceiverOptions();
-      options.maxInactivity = 3600; // 1 hour
+      options.maxInactivity = 3600;
       options.disableIdleTimeout = false;
 
       context.start(options);
