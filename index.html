@@ -374,8 +374,16 @@
           if (loadRequestData.media) {
             if (loadRequestData.media.streamType === cast.framework.messages.StreamType.LIVE) {
               isLiveStream = true;
+              playerManager.removeSupportedMediaCommands(
+                cast.framework.messages.Command.SEEK,
+                true
+              );
             } else {
               isLiveStream = false;
+              playerManager.addSupportedMediaCommands(
+                cast.framework.messages.Command.SEEK,
+                true
+              );
             }
           }
           return loadRequestData;
