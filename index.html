@@ -333,9 +333,9 @@
 
       playerManager.setMessageInterceptor(
         cast.framework.messages.MessageType.LOAD,
-        loadRequestData => {
-          if (loadRequestData.media) {
-            if (loadRequestData.media.streamType === cast.framework.messages.StreamType.LIVE) {
+        message => {
+          if (message.media) {
+            if (message.media.streamType === cast.framework.messages.StreamType.LIVE) {
               isLiveStream = true;
               playerManager.removeSupportedMediaCommands(
                 cast.framework.messages.Command.SEEK,
@@ -349,22 +349,32 @@
               );
             }
           }
-          return loadRequestData;
+          return message;
+        },
+      );
+
+      playerManager.setMessageInterceptor(
+        cast.framework.messages.MessageType.SEEK,
+        message => {
+          if (!(playerManager.getSupportedMediaCommands() & cast.framework.messages.Command.SEEK)) {
+            return null;
+          }
+          return message;
         },
       );
 
       playerManager.setMessageInterceptor(
         cast.framework.messages.MessageType.MEDIA_STATUS,
-        mediaStatusMessage => {
+        message => {
           if (
             isLiveStream &&
-            mediaStatusMessage.media &&
-            mediaStatusMessage.currentTime !== undefined &&
-            mediaStatusMessage.media.duration !== undefined
+            message.media &&
+            message.currentTime !== undefined &&
+            message.media.duration !== undefined
           ) {
-            mediaStatusMessage.currentTime = mediaStatusMessage.media.duration;
+            message.currentTime = message.media.duration;
           }
-          return mediaStatusMessage;
+          return message;
         },
       );
 
