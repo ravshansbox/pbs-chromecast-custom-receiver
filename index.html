@@ -307,8 +307,13 @@
         return playbackConfig;
       });
 
-      playerManager.addEventListener(cast.framework.events.EventType.ERROR, () => {
-        showError();
+      playerManager.addEventListener(cast.framework.events.EventType.ERROR, (event) => {
+        if (event.error && event.error.type === 'MEDIA') {
+          const isFatalError = playerManager.getPlayerState() === cast.framework.messages.PlayerState.IDLE;
+          if (isFatalError) {
+            showError();
+          }
+        }
       });
 
       playerManager.addEventListener(cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
@@ -321,6 +326,7 @@
 
       playerManager.addEventListener(cast.framework.events.EventType.PLAYING, () => {
         hideLoading();
+        errorOverlay.classList.add('hidden');
       });
 
       let isLiveStream = false;
